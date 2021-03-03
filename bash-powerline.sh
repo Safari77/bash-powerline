@@ -114,5 +114,6 @@ __powerline() {
     PROMPT_COMMAND="ps1${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 }
 
+unset PROMPT_COMMAND
 __powerline
 unset __powerline
