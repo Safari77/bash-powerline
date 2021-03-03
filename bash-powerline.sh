@@ -5,16 +5,16 @@
 
 __powerline() {
     # Colors
-    COLOR_RESET='\[\033[m\]'
-    COLOR_CWD=${COLOR_CWD:-'\[\033[0;34m\]'} # blue
-    COLOR_GIT=${COLOR_GIT:-'\[\033[0;36m\]'} # cyan
+    COLOR_RESET='\[\e[m\]'
+    COLOR_CWD='\[\e[38;5;110m\]'
+    COLOR_GIT='\[\e[38;5;115m\]'
     COLOR_BRACKET='\[\e[38;5;241m\]'
     COLOR_AT='\[\e[38;5;248m\]'
     COLOR_HOST='\[\e[38;5;252m\]'
     COLOR_LUSER='\[\e[38;5;244m\]'
     COLOR_ROOT='\[\e[38;5;215m\]'
-    COLOR_SUCCESS=${COLOR_SUCCESS:-'\[\033[0;32m\]'} # green
-    COLOR_FAILURE=${COLOR_FAILURE:-'\[\033[0;31m\]'} # red
+    COLOR_SUCCESS='\[\e[38;5;76m\]'
+    COLOR_FAILURE='\[\e[38;5;204m\]'
 
     # Symbols
     SYMBOL_GIT_BRANCH=${SYMBOL_GIT_BRANCH:-⑂}
@@ -51,6 +51,7 @@ __powerline() {
         [[ -n "$ref" ]] || return  # not a git repo
 
         local marks
+        local mod=0
 
         # scan first two lines of output from `git status`
         while IFS= read -r line; do
@@ -58,13 +59,17 @@ __powerline() {
                 [[ $line =~ ahead\ ([0-9]+) ]] && marks+=" $SYMBOL_GIT_PUSH${BASH_REMATCH[1]}"
                 [[ $line =~ behind\ ([0-9]+) ]] && marks+=" $SYMBOL_GIT_PULL${BASH_REMATCH[1]}"
             else # branch is modified if output contains more lines after the header line
-                marks="$SYMBOL_GIT_MODIFIED$marks"
+                mod=1
                 break
             fi
         done < <($git_eng status --porcelain --branch -uno --ignored=no --no-renames 2>/dev/null)  # note the space between the two <
 
         # print the git branch segment without a trailing newline
-        printf " $ref$marks"
+        if [[ $mod == 1 ]]; then
+          printf " $ref$SYMBOL_GIT_MODIFIED$marks"
+        else
+          printf " $ref$marks"
+        fi
     }
 
     ps1() {
