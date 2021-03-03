@@ -9,6 +9,8 @@ __powerline() {
     COLOR_CWD=${COLOR_CWD:-'\[\033[0;34m\]'} # blue
     COLOR_GIT=${COLOR_GIT:-'\[\033[0;36m\]'} # cyan
     COLOR_BRACKET='\[\e[38;5;241m\]'
+    COLOR_AT='\[\e[38;5;248m\]'
+    COLOR_HOST='\[\e[38;5;252m\]'
     COLOR_LUSER='\[\e[38;5;244m\]'
     COLOR_ROOT='\[\e[38;5;215m\]'
     COLOR_SUCCESS=${COLOR_SUCCESS:-'\[\033[0;32m\]'} # green
@@ -68,13 +70,13 @@ __powerline() {
     ps1() {
         # Check the exit code of the previous command and display different
         # colors in the prompt accordingly. 
-        if [ $? -eq 0 ]; then
+        if [[ $? -eq 0 ]]; then
             local symbol=" $COLOR_SUCCESS$PS_SYMBOL$COLOR_RESET"
         else
             local symbol=" $COLOR_FAILURE$PS_SYMBOL$COLOR_RESET"
         fi
 
-        if [ $UID == 0 ]; then
+        if [[ $UID == 0 ]]; then
             COLOR_USER=$COLOR_ROOT
         else
             COLOR_USER=$COLOR_LUSER
@@ -94,9 +96,14 @@ __powerline() {
             local git="$COLOR_GIT$(__git_info)$COLOR_RESET"
         fi
 
-        local __user="$COLOR_BRACKET[$COLOR_RESET$COLOR_USER\u$COLOR_RESET$COLOR_BRACKET]$COLOR_RESET"
+        if [[ -z $SSH_CLIENT ]]; then
+            local __ssh=""
+        else
+            local __ssh="$COLOR_AT@$COLOR_RESET$COLOR_HOST\H$COLOR_RESET"
+        fi
+        local __user="$COLOR_BRACKET[$COLOR_RESET$COLOR_USER\u$COLOR_RESET$__ssh$COLOR_BRACKET]$COLOR_RESET"
         PS1="$XTERM_TITLE$__user $COLOR_BRACKET+$COLOR_RESET\j $cwd$git$symbol "
-        unset __user
+        unset __user __ssh
     }
 
     PROMPT_COMMAND="ps1${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
