@@ -8,6 +8,9 @@ __powerline() {
     COLOR_RESET='\[\033[m\]'
     COLOR_CWD=${COLOR_CWD:-'\[\033[0;34m\]'} # blue
     COLOR_GIT=${COLOR_GIT:-'\[\033[0;36m\]'} # cyan
+    COLOR_BRACKET='\[\e[38;5;241m\]'
+    COLOR_LUSER='\[\e[38;5;244m\]'
+    COLOR_ROOT='\[\e[38;5;215m\]'
     COLOR_SUCCESS=${COLOR_SUCCESS:-'\[\033[0;32m\]'} # green
     COLOR_FAILURE=${COLOR_FAILURE:-'\[\033[0;31m\]'} # red
 
@@ -17,10 +20,12 @@ __powerline() {
     SYMBOL_GIT_PUSH=${SYMBOL_GIT_PUSH:-↑}
     SYMBOL_GIT_PULL=${SYMBOL_GIT_PULL:-↓}
 
+    XTERM_TITLE='\[\e]0;\u@\H: \w\a\]'
+
     if [[ -z "$PS_SYMBOL" ]]; then
       case "$(uname)" in
           Darwin)   PS_SYMBOL='';;
-          Linux)    PS_SYMBOL='$';;
+          Linux)    PS_SYMBOL='\$';;
           *)        PS_SYMBOL='%';;
       esac
     fi
@@ -54,7 +59,7 @@ __powerline() {
                 marks="$SYMBOL_GIT_MODIFIED$marks"
                 break
             fi
-        done < <($git_eng status --porcelain --branch 2>/dev/null)  # note the space between the two <
+        done < <($git_eng status --porcelain --branch -uno --ignored=no --no-renames 2>/dev/null)  # note the space between the two <
 
         # print the git branch segment without a trailing newline
         printf " $ref$marks"
@@ -64,9 +69,15 @@ __powerline() {
         # Check the exit code of the previous command and display different
         # colors in the prompt accordingly. 
         if [ $? -eq 0 ]; then
-            local symbol="$COLOR_SUCCESS $PS_SYMBOL $COLOR_RESET"
+            local symbol=" $COLOR_SUCCESS$PS_SYMBOL$COLOR_RESET"
         else
-            local symbol="$COLOR_FAILURE $PS_SYMBOL $COLOR_RESET"
+            local symbol=" $COLOR_FAILURE$PS_SYMBOL$COLOR_RESET"
+        fi
+
+        if [ $UID == 0 ]; then
+            COLOR_USER=$COLOR_ROOT
+        else
+            COLOR_USER=$COLOR_LUSER
         fi
 
         local cwd="$COLOR_CWD\w$COLOR_RESET"
@@ -83,7 +94,9 @@ __powerline() {
             local git="$COLOR_GIT$(__git_info)$COLOR_RESET"
         fi
 
-        PS1="$cwd$git$symbol"
+        local __user="$COLOR_BRACKET[$COLOR_RESET$COLOR_USER\u$COLOR_RESET$COLOR_BRACKET]$COLOR_RESET"
+        PS1="$XTERM_TITLE$__user $COLOR_BRACKET+$COLOR_RESET\j $cwd$git$symbol "
+        unset __user
     }
 
     PROMPT_COMMAND="ps1${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
